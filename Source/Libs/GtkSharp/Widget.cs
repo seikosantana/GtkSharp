@@ -400,10 +400,6 @@ namespace Gtk {
 
 			if (disposing && !destroyed && IsToplevel)
 			{
-				//If this is a TopLevel widget, then we do not hold a ref, only a toggle ref.
-				//Freeing our toggle ref expects a normal ref to exist, and therefore does not check if the object still exists.
-				//Take a ref here and let our toggle ref unref it.
-				g_object_ref (Handle);
 				gtk_widget_destroy (Handle);
 				destroyed = true;
 			}
@@ -424,7 +420,15 @@ namespace Gtk {
 				base.Raw = value;
 
 				if (value != IntPtr.Zero)
+				{
+					//If this is a TopLevel widget, then we do not hold a ref, only a toggle ref.
+					//Freeing our toggle ref expects a normal ref to exist, and therefore does not check if the object still exists.
+					//Take a ref here and let our toggle ref unref it in dispose/finalizer.
+					if (IsToplevel)
+						g_object_ref (value);
+
 					InternalDestroyed += NativeDestroyHandler;
+				}
 			}
 		}
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
